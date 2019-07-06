@@ -1,0 +1,57 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Lambda function for posting messages to Slack about the status of the execution of a CodePipeline pipeline
+
+Parameters:
+
+  CodePipelineName:
+    Type: String
+    Description: The name of the CodePipeline for which status update should be posted to Slack
+  SlackWebhookURL:
+    Type: String
+    Description: The Incoming Webhook URL for posting messages to Slack
+
+Resources:
+
+  StatusUpdateFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/
+      Handler: index.handler
+      Runtime: ruby2.5
+      Timeout: 10
+      Policies:
+        - AWSCodePipelineReadOnlyAccess
+        - AWSLambdaBasicExecutionRole
+      Environment:
+        Variables:
+          SLACK_WEBHOOK_URL:
+            Ref: SlackWebhookURL
+          PIPELINE_NAME:
+            Ref: CodePipelineName
+      Events:
+        PipelineExecutionState:
+          Type: CloudWatchEvent
+          Properties:
+            Pattern:
+              source:
+                - aws.codepipeline
+              detail-type:
+                - "CodePipeline Pipeline Execution State Change"
+              detail:
+                state:
+                  - "STARTED"
+                  - "SUCCEEDED"
+                  - "FAILED"
+        StageExecutionState:
+          Type: CloudWatchEvent
+          Properties:
+            Pattern:
+              source:
+                - aws.codepipeline
+              detail-type:
+                - "CodePipeline Stage Execution State Change"
+              detail:
+                state:
+                  - "SUCCEEDED"
+                  - "FAILED"
