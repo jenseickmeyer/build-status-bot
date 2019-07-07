@@ -16,26 +16,37 @@ def handler(event:, context:)
   detail_type = event["detail-type"]
   if detail_type == "CodePipeline Pipeline Execution State Change"
     state = event["detail"]["state"]
-    post_message "Pipeline execution has #{state.downcase}"
+    if state == "STARTED"
+      post_message "A new build has just started"
+    end
   elsif detail_type == "CodePipeline Stage Execution State Change"
     stage = event["detail"]["stage"]
     state = event["detail"]["state"]
 
     if stage == "Build"
-      post_message "Build has #{state.downcase}"
+      if state == "SUCCEEDED"
+        post_message ":hammer_and_wrench: The build has finished successfully.", "good"
+      elsif state == "FAILED"
+        post_message ":hammer_and_wrench: The build has failed", "danger"
+      end
+
     elsif stage == "Deploy"
-      post_message "Deployment has #{state.downcase}"
+      if state == "SUCCEEDED"
+        post_message ":package: Deployment has finished successfully", "good"
+      elsif state == "FAILED"
+        post_message ":package: Deployment has has failed", "danger"
+      end
     end
   end
 
 end
 
-def post_message (message)
+def post_message (message, color = "gray")
   uri = URI.parse(SLACK_WEBHOOK_URL)
 
   header = { 'Content-Type': 'application/json' }
   # TODO: Provide more information
-  message = { text: message }
+  message = { attachments: [ { fallback: message, color: color, text: message } ] }
 
   # Create the HTTP objects
   http = Net::HTTP.new(uri.host, uri.port)
