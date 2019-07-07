@@ -41,8 +41,6 @@ Resources:
               detail:
                 state:
                   - "STARTED"
-                  - "SUCCEEDED"
-                  - "FAILED"
         StageExecutionState:
           Type: CloudWatchEvent
           Properties:
