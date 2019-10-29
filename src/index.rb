@@ -34,7 +34,7 @@ def handler(event:, context:)
         post_message ":hammer_and_wrench: Build for commit `#{commit_id[0, 7]}` has failed", "danger"
       end
 
-    elsif stage == "Deploy"
+    elsif stage.start_with? "Deploy"
       if state == "SUCCEEDED"
         post_message ":package: Deployment for commit `#{commit_id[0, 7]}` has finished successfully", "good"
       elsif state == "FAILED"
